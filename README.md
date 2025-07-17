@@ -1,33 +1,26 @@
-<h1 align="center">MCP-Mem0: Long-Term Memory for AI Agents</h1>
+<h1 align="center">MCP Template Python</h1>
 
-<p align="center">
-  <img src="public/Mem0AndMCP.png" alt="Mem0 and MCP Integration" width="600">
-</p>
-
-A template implementation of the [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server integrated with [Mem0](https://mem0.ai) for providing AI agents with persistent memory capabilities.
+A simple template implementation of the [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that contains a basic tool returning a secret phrase. 
 
 Use this as a reference point to build your MCP servers yourself, or give this as an example to an AI coding assistant and tell it to follow this example for structure and code correctness!
 
 ## Overview
 
-This project demonstrates how to build an MCP server that enables AI agents to store, retrieve, and search memories using semantic search. It serves as a practical template for creating your own MCP servers, simply using Mem0 and a practical example.
+This project demonstrates how to build a basic MCP server using FastMCP. It serves as a practical template for creating your own MCP servers with minimal setup.
 
 The implementation follows the best practices laid out by Anthropic for building MCP servers, allowing seamless integration with any MCP-compatible client.
 
 ## Features
 
-The server provides three essential memory management tools:
+The server provides a simple test tool:
 
-1. **`save_memory`**: Store any information in long-term memory with semantic indexing
-2. **`get_all_memories`**: Retrieve all stored memories for comprehensive context
-3. **`search_memories`**: Find relevant memories using semantic search
+1. **`secret_phrase`**: Returns a test secret phrase for verification
 
 ## Prerequisites
 
 - Python 3.12+
-- Supabase or any PostgreSQL database (for vector storage of memories)
-- API keys for your chosen LLM provider (OpenAI, OpenRouter, or Ollama)
-- Docker if running the MCP server as a container (recommended)
+- uv (Python package manager)
+- ngrok (for tunneling local servers)
 
 ## Installation
 
@@ -40,88 +33,114 @@ The server provides three essential memory management tools:
 
 2. Clone this repository:
    ```bash
-   git clone https://github.com/coleam00/mcp-mem0.git
-   cd mcp-mem0
+   git clone <your-repo-url>
+   cd mcp-template-python
    ```
 
 3. Install dependencies:
    ```bash
-   uv pip install -e .
+   uv sync
    ```
 
-4. Create a `.env` file based on `.env.example`:
-   ```bash
-   cp .env.example .env
-   ```
-
-5. Configure your environment variables in the `.env` file (see Configuration section)
-
-### Using Docker (Recommended)
+### Using Docker (Optional)
 
 1. Build the Docker image:
    ```bash
-   docker build -t mcp/mem0 --build-arg PORT=8050 .
+   docker build -t mcp-template-python --build-arg PORT=8050 .
    ```
 
-2. Create a `.env` file based on `.env.example` and configure your environment variables
+2. Create a `.env` file and configure your environment variables
 
 ## Configuration
 
 The following environment variables can be configured in your `.env` file:
 
-| Variable | Description | Example |
-|----------|-------------|----------|
+| Variable | Description | Default |
+|----------|-------------|---------|
 | `TRANSPORT` | Transport protocol (sse or stdio) | `sse` |
 | `HOST` | Host to bind to when using SSE transport | `0.0.0.0` |
 | `PORT` | Port to listen on when using SSE transport | `8050` |
-| `LLM_PROVIDER` | LLM provider (openai, openrouter, or ollama) | `openai` |
-| `LLM_BASE_URL` | Base URL for the LLM API | `https://api.openai.com/v1` |
-| `LLM_API_KEY` | API key for the LLM provider | `sk-...` |
-| `LLM_CHOICE` | LLM model to use | `gpt-4o-mini` |
-| `EMBEDDING_MODEL_CHOICE` | Embedding model to use | `text-embedding-3-small` |
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host:port/db` |
 
 ## Running the Server
 
-### Using uv
+### Local Development
 
 #### SSE Transport
 
 ```bash
-# Set TRANSPORT=sse in .env then:
 uv run src/main.py
 ```
 
-The MCP server will essentially be run as an API endpoint that you can then connect to with config shown below.
+The MCP server will run as an API endpoint on `http://localhost:8050`.
 
 #### Stdio Transport
 
-With stdio, the MCP client iself can spin up the MCP server, so nothing to run at this point.
+With stdio, the MCP client itself can spin up the MCP server, so no need to run it manually.
 
 ### Using Docker
 
 #### SSE Transport
 
 ```bash
-docker run --env-file .env -p:8050:8050 mcp/mem0
+docker run --env-file .env -p 8050:8050 mcp-template-python
 ```
-
-The MCP server will essentially be run as an API endpoint within the container that you can then connect to with config shown below.
 
 #### Stdio Transport
 
-With stdio, the MCP client iself can spin up the MCP server container, so nothing to run at this point.
+With stdio, the MCP client itself can spin up the MCP server container.
+
+## Tunneling with ngrok
+
+To make your local MCP server accessible over the internet (useful for testing with cloud-based MCP clients):
+
+### Setup ngrok
+
+1. Sign up at [ngrok.com](https://ngrok.com) and get your auth token
+2. Install ngrok:
+   ```bash
+   brew install ngrok  # macOS
+   # or download from https://ngrok.com/download
+   ```
+3. Configure ngrok:
+   ```bash
+   ngrok config add-authtoken YOUR_AUTH_TOKEN
+   ```
+
+### Create a Static Domain (Recommended)
+
+1. Get a free static domain from your ngrok dashboard
+2. Start your MCP server:
+   ```bash
+   uv run src/main.py
+   ```
+3. In another terminal, start the tunnel with the skip-browser-warning header:
+   ```bash
+   ngrok http --url=your-static-domain.ngrok-free.app --request-header-add="ngrok-skip-browser-warning:true" 8050
+   ```
+
+Your MCP server will now be accessible at `https://your-static-domain.ngrok-free.app`
+
+### Using Ephemeral Domain
+
+If you prefer not to use a static domain:
+
+```bash
+ngrok http --request-header-add="ngrok-skip-browser-warning:true" 8050
+```
+
+This will give you a temporary URL that changes each time you restart ngrok.
 
 ## Integration with MCP Clients
 
 ### SSE Configuration
 
-Once you have the server running with SSE transport, you can connect to it using this configuration:
+#### Local Server
+For a local server running on localhost:
 
 ```json
 {
   "mcpServers": {
-    "mem0": {
+    "mcp-template-python": {
       "transport": "sse",
       "url": "http://localhost:8050/sse"
     }
@@ -129,73 +148,49 @@ Once you have the server running with SSE transport, you can connect to it using
 }
 ```
 
-> **Note for Windsurf users**: Use `serverUrl` instead of `url` in your configuration:
-> ```json
-> {
->   "mcpServers": {
->     "mem0": {
->       "transport": "sse",
->       "serverUrl": "http://localhost:8050/sse"
->     }
->   }
-> }
-> ```
-
-> **Note for n8n users**: Use host.docker.internal instead of localhost since n8n has to reach outside of it's own container to the host machine:
-> 
-> So the full URL in the MCP node would be: http://host.docker.internal:8050/sse
-
-Make sure to update the port if you are using a value other than the default 8050.
-
-### Python with Stdio Configuration
-
-Add this server to your MCP configuration for Claude Desktop, Windsurf, or any other MCP client:
+#### Tunneled Server
+For a server accessible via ngrok tunnel:
 
 ```json
 {
   "mcpServers": {
-    "mem0": {
-      "command": "your/path/to/mcp-mem0/.venv/Scripts/python.exe",
-      "args": ["your/path/to/mcp-mem0/src/main.py"],
+    "mcp-template-python": {
+      "transport": "sse",
+      "url": "https://your-static-domain.ngrok-free.app/sse"
+    }
+  }
+}
+```
+
+> **Note for Windsurf users**: Use `serverUrl` instead of `url` in your configuration.
+
+### Stdio Configuration
+
+#### Using uv
+
+```json
+{
+  "mcpServers": {
+    "mcp-template-python": {
+      "command": "uv",
+      "args": ["run", "src/main.py"],
+      "cwd": "/path/to/mcp-template-python",
       "env": {
-        "TRANSPORT": "stdio",
-        "LLM_PROVIDER": "openai",
-        "LLM_BASE_URL": "https://api.openai.com/v1",
-        "LLM_API_KEY": "YOUR-API-KEY",
-        "LLM_CHOICE": "gpt-4o-mini",
-        "EMBEDDING_MODEL_CHOICE": "text-embedding-3-small",
-        "DATABASE_URL": "YOUR-DATABASE-URL"
+        "TRANSPORT": "stdio"
       }
     }
   }
 }
 ```
 
-### Docker with Stdio Configuration
+#### Using Docker
 
 ```json
 {
   "mcpServers": {
-    "mem0": {
+    "mcp-template-python": {
       "command": "docker",
-      "args": ["run", "--rm", "-i", 
-               "-e", "TRANSPORT", 
-               "-e", "LLM_PROVIDER", 
-               "-e", "LLM_BASE_URL", 
-               "-e", "LLM_API_KEY", 
-               "-e", "LLM_CHOICE", 
-               "-e", "EMBEDDING_MODEL_CHOICE", 
-               "-e", "DATABASE_URL", 
-               "mcp/mem0"],
-      "env": {
-        "TRANSPORT": "stdio",
-        "LLM_PROVIDER": "openai",
-        "LLM_BASE_URL": "https://api.openai.com/v1",
-        "LLM_API_KEY": "YOUR-API-KEY",
-        "LLM_CHOICE": "gpt-4o-mini",
-        "EMBEDDING_MODEL_CHOICE": "text-embedding-3-small",
-        "DATABASE_URL": "YOUR-DATABASE-URL"
-      }
+      "args": ["run", "--rm", "-i", "-e", "TRANSPORT=stdio", "mcp-template-python"]
     }
   }
 }
@@ -206,6 +201,6 @@ Add this server to your MCP configuration for Claude Desktop, Windsurf, or any o
 This template provides a foundation for building more complex MCP servers. To build your own:
 
 1. Add your own tools by creating methods with the `@mcp.tool()` decorator
-2. Create your own lifespan function to add your own dependencies (clients, database connections, etc.)
-3. Modify the `utils.py` file for any helper functions you need for your MCP server
-4. Feel free to add prompts and resources as well  with `@mcp.resource()` and `@mcp.prompt()`
+2. Modify the server configuration as needed
+3. Add any additional dependencies to `pyproject.toml`
+4. Feel free to add prompts and resources as well with `@mcp.resource()` and `@mcp.prompt()`
