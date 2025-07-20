@@ -115,7 +115,7 @@ To make your local MCP server accessible over the internet (useful for testing w
    ```
 3. In another terminal, start the tunnel with the skip-browser-warning header:
    ```bash
-   ngrok http --url=wondrous-turtle-polite.ngrok-free.app --request-header-add="ngrok-skip-browser-warning:true" 8050
+   ngrok http --url=your-static-domain.ngrok-free.app --request-header-add="ngrok-skip-browser-warning:true" 8050
    ```
 
 Your MCP server will now be accessible at `https://your-static-domain.ngrok-free.app`
